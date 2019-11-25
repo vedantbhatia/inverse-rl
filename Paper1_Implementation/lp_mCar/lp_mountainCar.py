@@ -67,7 +67,7 @@ v_binsize=(vmax - vmin)/discretization
 
 
 
-f = open('Q_Opt1','rb')
+f = open('Data\\Q_Opt1','rb')
 Q=pickle.load(f)
 f.close()
 
@@ -86,7 +86,7 @@ basis=[-1.2+basis_bin*i for i in range(numOfBasis-1)]+[0.5]
 
 V=[]
 for i in range(numOfBasis):
-	f = open('V'+str(i),'rb')
+	f = open('Data\\V'+str(i),'rb')
 	V.append(pickle.load(f))
 	f.close()
 #print(len(value_funcs[0][0]))
