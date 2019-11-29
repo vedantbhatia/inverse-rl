@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[12]:
 
 
 import numpy as np
@@ -9,6 +9,7 @@ import random
 import copy
 from GridWorld import *
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 
 # In[2]:
@@ -41,11 +42,25 @@ for i in sampleGridTrainer.Q:
     
 
 
-# In[4]:
+# In[82]:
 
 
 plt.matshow(sampleGridTrainer.env.RewardGrid);
 plt.colorbar()
+plt.show()
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+x = y = np.arange(0, 5, 1)
+X, Y = np.meshgrid(x, y)
+zs = sampleGridTrainer.env.RewardGrid
+Z = zs.reshape(X.shape)
+ax.view_init(45, -135)
+ax.plot_surface(X, Y, Z,alpha=0.5,cmap='jet', rstride=1, cstride=1, edgecolors='k', lw=1)
+ax.set_xlabel('X Axis')
+ax.set_ylabel('Y Axis')
+ax.set_zlabel('Reward Values')
+
 plt.show()
 
 
@@ -254,19 +269,45 @@ def optimisedIRL( policy, gamma=0.5, penalty=10):
     return solvers.lp(x,A,b)
 
 
-# In[11]:
+# In[99]:
 
 
-#policy=np.reshape(sampleGridTrainer.matrix,[25,1])
-policy=np.reshape(optimumPolicy,[25,1])
-rewards=optimisedIRL(policy,0.5,3)
-rewards = rewards['x']
-rewards=rewards[:5*5]
-rewards = rewards/max(rewards)
-rewards=np.reshape(rewards,[5,5])
-plt.matshow(rewards);
-plt.colorbar()
-plt.show()
+error=[]
+index=[]
+#for i in range(0,10):
+for i in range(1):
+    #policy=np.reshape(sampleGridTrainer.matrix,[25,1])
+    policy=np.reshape(optimumPolicy,[25,1])
+    rewards=optimisedIRL(policy,0.1,3)
+    rewards = rewards['x']
+    rewards=rewards[:5*5]
+    rewards = rewards/max(rewards)
+    rewards=np.reshape(rewards,[5,5])
+    true=np.abs(sampleGridTrainer.env.RewardGrid)
+    obtained=np.abs(rewards)
+    errors=true-obtained
+    #print(errors)
+    errors=np.abs(sum(sum(errors)))
+    error.append(errors)
+    index.append(i)
+    plt.matshow(rewards);
+    plt.colorbar()
+    plt.show()
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    x = y = np.arange(0, 5, 1)
+    X, Y = np.meshgrid(x, y)
+    zs = rewards
+    Z = zs.reshape(X.shape)
+    ax.view_init(45, 135)
+    ax.plot_surface(X, Y, Z,alpha=0.5,cmap='jet', rstride=1, cstride=1, edgecolors='k', lw=1)
+
+    ax.set_xlabel('X Axis')
+    ax.set_ylabel('Y Axis')
+    ax.set_zlabel('Reward Values')
+
+    plt.show()
 
 
 # In[ ]:
