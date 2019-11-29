@@ -28,10 +28,6 @@ def getExpectedValue(V,i,j,a):
 			if move>=N:
 				move=N-1
 
-			#r=0
-			#if i>=rewardRegion and move>=rewardRegion:
-			#	r=1
-			
 			r=R[i][j]
 			avg+=(r+gamma*V[i][move])
 
@@ -57,7 +53,7 @@ def getExpectedValue(V,i,j,a):
 
 
 
-#def getStateAndReward(i,j,a):
+def getStateAndReward(i,j,a):
 	
 	if a=="U":
 		#print("U")
@@ -120,8 +116,7 @@ def updateValues(V,policy):
 	v=[[0.0 for i in range(N)] for j in range(N)]
 	for i in range(N):
 		for j in range(N):
-			v[i][j]=getExpectedValue(V,i,j,policy[i][j]) #r+gamma*V[i1][j1]
-	#showValue(v)
+			v[i][j]=getExpectedValue(V,i,j,policy[i][j]) 
 	return v
 
 
@@ -137,7 +132,6 @@ def updatePolicy(V):
 	for i in range(N):
 		for j in range(N):
 			k="U"
-			#i1,j1,r=getStateAndReward(i,j,"U")
 			maxim=getExpectedValue(V,i,j,"U")
 
 			for x in ["D","L","R"]:
@@ -148,6 +142,31 @@ def updatePolicy(V):
 			p[i][j]=k
 	return p
 
+
+def getEquivalentPolicy(V):
+	global N
+	global rewardRegion
+	global error
+	global moveLength
+	global gamma
+	global R
+
+	p=[["U" for i in range(N)] for j in range(N)]
+	for i in range(N):
+		for j in range(N):
+			k={"U"}
+			maxim=getExpectedValue(V,i,j,"U")
+
+			for x in ["D","L","R"]:
+				tmpExp=getExpectedValue(V,i,j,x)
+				if abs(tmpExp-maxim)<0.0001:
+					maxim=max(tmpExp,maxim)
+					k.add(x)
+				elif tmpExp>maxim:
+					maxim=tmpExp
+					k={x}
+			p[i][j]=k
+	return p
 
 
 def showValue(Val):
@@ -161,7 +180,7 @@ def showValue(Val):
 	print("STATE-VALUE FUNCTION")	
 	for i in range(N):
 		for j in range(N):
-			print(Val[i][j],end=" ")
+			print("%.1f" % Val[i][j],end=" ")
 		print()
 
 
@@ -177,7 +196,10 @@ def showPolicy(P):
 	print("POLICY:")
 	for i in range(N):
 		for j in range(N):
-			print(P[i][j],end=" ")
+			out=""
+			for k in P[i][j]:
+				out+=k
+			print(out,end=" ")
 		print()
 
 
@@ -205,8 +227,6 @@ def getOptimalPolicy(n,r):
 	V=[[0.0 for i in range(N)] for j in range(N)] 
 	policy=[["D" for i in range(N)] for j in range(N)] #U:0, D:1, L:2, R:3
 
-	# specialStates=[[[i,j] for i in range(40,50)] for j in range(40,50)]
-	
 
 	t=0
 	while 1>0:
@@ -216,28 +236,21 @@ def getOptimalPolicy(n,r):
 		#Policy Evaluation
 		while 1>0:
 			tt+=1
-			#print(tt)
-			#if tt%1000==1:
-			#	showValue(V)
 			_V=updateValues(copy.deepcopy(V),policy)
 		
 			flag_break=True
 			for i in range(N):
 				for j in range(N):
 					if abs(V[i][j]-_V[i][j])>0.001:
-						#print(tt,abs(V[i][j]-_V[i][j]))
 						flag_break=False
 						break
 				if flag_break==False:
 					break
-			#print(flag_break)
+
 			if flag_break:
 				break
 			else:
 				V=copy.deepcopy(_V)
-
-		#print()
-		#print(t,": ",tt)
 
 		#Policy Improvement
 		_policy=updatePolicy(V)
@@ -248,16 +261,10 @@ def getOptimalPolicy(n,r):
 		else:
 			policy=copy.deepcopy(_policy)
 
-		#showValue(V)
-		#showPolicy(policy)
 
-		
-	# print()
-	# print("######################################")
-	# print("OPTIMAL STATE-VALUE FUNCTION")	
-	# showValue(V)
-	# showPolicy(policy)
-	return policy
+	equiv_policy=getEquivalentPolicy(V)
+	#showValue(V)
+	return policy,equiv_policy
 
 N=50
 rewardRegion=round(0.8*N)

@@ -67,7 +67,7 @@ v_binsize=(vmax - vmin)/discretization
 
 
 
-f = open('Data\\Q_Opt1','rb')
+f = open('Data\\Q_Opt2','rb')
 Q=pickle.load(f)
 f.close()
 
@@ -80,9 +80,9 @@ basis=[-1.2+basis_bin*i for i in range(numOfBasis-1)]+[0.5]
 #value_funcs=[]
 
 
-#for i in range(1,numOfBasis):
-#	calcValueFunc.getFunction(Q,basis[i],scale,i)
-
+# for i in range(0,numOfBasis):
+# 	calcValueFunc.getFunction(Q,basis[i],scale,i)
+# exit(0)
 
 V=[]
 for i in range(numOfBasis):
@@ -95,41 +95,6 @@ for i in range(numOfBasis):
 S0=getSampleStates()
 print(len(S0))
 
-
-'''c = [0]*numOfBasis + [-1]*len(S0)
-bound=[(-1,1) for i in range(numOfBasis)] + [(None,None) for j in range(len(S0))]
-A = [[0 for i in range(len(c))] for j in range(2*len(S0))] #list(np.zeros((len(S0)*2,len(c))))
-b =	[0 for j in range(2*len(S0))]
-#print(A)
-#print(len(A),len(A[0]))
-
-for i in range(len(S0)):
-	A[2*i][numOfBasis+i]=1
-	A[2*i+1][numOfBasis+i]=1
-
-	a=np.argmax(np.array(Q[S0[i][0]][S0[i][1]]))
-	actions=[0,1,2]
-	actions.remove(a)
-	a2=actions[0]
-	a3=actions[1]
-
-	s=getNextState(S0[i],a)
-	s2=getNextState(S0[i],a2)
-	s3=getNextState(S0[i],a3)
-	
-	for j in range(numOfBasis):
-		A[2*i][j] = -1*V[j][s[0]][s[1]] + V[j][s2[0]][s2[1]]
-		A[2*i+1][j] = -1*V[j][s[0]][s[1]] + V[j][s3[0]][s3[1]]
-
-	#print(s,s2,s3)
-
-print(A)
-print("Solving LP")
-res=linprog(c,A_ub=A,b_ub=b,bounds=bound)
-# f=open('result','wb')
-# pickle.dump(res,f)
-# f.close()
-print(res)'''
 
 c = [0]*(numOfBasis)
 bound=[(-1,1) for i in range(numOfBasis)]
@@ -148,7 +113,7 @@ for i in range(len(S0)):
 	for j in range(numOfBasis):
 		tmpV= -1*V[j][s[0]][s[1]] + V[j][s2[0]][s2[1]]
 		if tmpV>0:
-			tmpV*=1.85 #1.85
+			tmpV*=2.4 
 		c[j] += tmpV
 		
 	#print(s,s2,s3)
@@ -166,12 +131,15 @@ while x<=xmax:
 	X.append(x)
 	rx=0
 	for k in range(len(basis)):
-		rx+=alphas[k]*calcPDF(x,basis[k],0.15) #0.15
+		rx+=alphas[k]*calcPDF(x,basis[k],0.25) #0.15
 	R.append(rx)
 
 	x+=x_binsize
 
 
 plt.figure(1)
+plt.xlabel("car's x-position")
+plt.ylabel("Fitted Reward")
+plt.title("Problem type 2: Reward graph of modified LP")
 plt.plot(X,R)
 plt.show()
