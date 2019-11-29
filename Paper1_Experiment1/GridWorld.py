@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[4]:
+# In[50]:
 
 
 import numpy as np
 import random
+import copy
 
 
-# In[ ]:
+# In[7]:
 
 
 # Directions
@@ -17,10 +18,10 @@ import random
 #2 is right
 #3 is Up
 
-# 8.8 displays your position
+# 1.1 displays your position
 
 
-# In[126]:
+# In[8]:
 
 
 
@@ -139,22 +140,23 @@ class myGridWorld:
         return self.move(action)
 
 
-# In[182]:
+# In[43]:
 
 
 class myGridWorldTrainer:
     
+    env=[]
     Q=[]
     matrix=[]
     Trajectories=[]
     DirectionalMatrix=[]
     
     def trainModel(self,model):
-        env=model
+        env=self.env
         alpha = 0.6
         gamma = 0.9
         Q = np.zeros([env.observation_spaces, env.action_space])
-        for episode in range(1,1001):
+        for episode in range(1,10001):
             done = False
             TotalReward = 0
             state = env.reset()
@@ -200,14 +202,14 @@ class myGridWorldTrainer:
         for iters in range(numTrajectories):
             path=[]
             done=False
-            state = env.reset()
+            state = self.env.reset()
             TotalReward = 0
             path.append(state)
-            i=int(state/env.size)
-            j=state%env.size
+            i=int(state/self.env.size)
+            j=state%self.env.size
             while done != True:
                 action=matrix[i][j]
-                i,j,state2, reward, done = env.step(action)
+                i,j,state2, reward, done = self.env.step(action)
                 TotalReward += reward
                 state = state2
                 path.append(state)
@@ -219,19 +221,35 @@ class myGridWorldTrainer:
         return Trajectories
 
     def allInOne(self,model,numTrajectories):
+        self.env=model
         Q=self.trainModel(model)
         matrix=self.getDirections(Q)
         return self.getTrajectories(matrix,numTrajectories)
 
 
-# In[184]:
+# In[48]:
 
 
 sampleGrid=myGridWorld()
 sampleGridTrainer=myGridWorldTrainer()
 sampleTrajectories=sampleGridTrainer.allInOne(sampleGrid,20)
-for i in sampleTrajectories:
+# for i in sampleTrajectories:
+#     print(i)
+    
+for i in sampleGridTrainer.matrix:
     print(i)
+    
+for i in sampleGridTrainer.DirectionalMatrix:
+    print(i)
+    
+for i in sampleGridTrainer.Q:
+    print(i)
+
+
+# In[ ]:
+
+
+
 
 
 # In[ ]:
