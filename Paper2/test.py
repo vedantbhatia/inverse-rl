@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import axes3d, Axes3D #<-- Note the capitalization!
 
 from Paper2 import maxent, gridworld
 
@@ -43,4 +44,4 @@ def main(grid_size, discount, n_trajectories, epochs, learning_rate):
     plt.show()
 
 if __name__ == '__main__':
-    main(5, 0.01, 100, 200, 0.01)
+    main(5, 0.01, 100, 20, 0.01)

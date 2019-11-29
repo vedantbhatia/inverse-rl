@@ -4,14 +4,16 @@ import math
 import random
 import time
 import gym
+import matplotlib.pyplot as plt
 import gym_maze
 
-IRL_REWARDS = np.load('rewards.npy',allow_pickle=True)
+IRL_REWARDS = np.load('Paper2/rewardsgw.npy',allow_pickle=True)
 IRL_REWARDS = IRL_REWARDS - np.max(IRL_REWARDS)
 
-def simulate():
+def simulate(IRL=False):
 
     # Instantiating the learning related parameters
+    rewards = []
     learning_rate = get_learning_rate(0)
     explore_rate = get_explore_rate(0)
     discount_factor = 0.99
@@ -42,7 +44,8 @@ def simulate():
             # Observe the result
             state = state_to_bucket(obv)
             s = state[0]*10+state[1]
-            reward = IRL_REWARDS[s]
+            if(IRL):
+                reward =IRL_REWARDS[s]
             total_reward += reward
 
             # Update the Q based on the result
@@ -103,6 +106,11 @@ def simulate():
         # Update parameters
         explore_rate = get_explore_rate(episode)
         learning_rate = get_learning_rate(episode)
+        rewards.append(total_reward)
+    l = 'IRL Rewards' if IRL else 'True Rewards'
+    plt.plot(rewards,label=l)
+    # plt.show()
+
 
 
 def select_action(state, explore_rate):
@@ -142,7 +150,7 @@ def state_to_bucket(state):
 if __name__ == "__main__":
 
     # Initialize the "maze" environment
-    env = gym.make("maze-random-10x10-v0")
+    env = gym.make("maze-sample-10x10-v0")
 
     '''
     Defining the environment related constants
@@ -171,11 +179,11 @@ if __name__ == "__main__":
     STREAK_TO_END = 100
     SOLVED_T = np.prod(MAZE_SIZE, dtype=int)
     DEBUG_MODE = 0
-    RENDER_MAZE = True
+    RENDER_MAZE = False
     ENABLE_RECORDING = False
 
     '''
-    Creating a Q-Table for each state-action pair
+    Creating a Q-Table for each state-action pairq
     '''
     q_table = np.zeros(NUM_BUCKETS + (NUM_ACTIONS,), dtype=float)
 
@@ -189,11 +197,16 @@ if __name__ == "__main__":
         env.monitor.start(recording_folder, force=True)
 
     simulate()
+    q_table = np.zeros(NUM_BUCKETS + (NUM_ACTIONS,), dtype=float)
+
+    simulate(True)
+    plt.legend()
+    plt.show()
 
     if ENABLE_RECORDING:
         env.monitor.close()
     trajectories = []
-    for episode in range(1):
+    for episode in range(100):
         curr_traj = []
         # Reset the environment
         obv = env.reset()
@@ -215,13 +228,13 @@ if __name__ == "__main__":
             state = state_to_bucket(obv)
             if(done):
                 print("done",t)
-                while(len(curr_traj)<60):
+                while(len(curr_traj)<100):
                     s = state[0]*10+state[1]
                     curr_traj.append((s,action))
                 trajectories.append(curr_traj)
                 break
-            env.render()
-            time.sleep(1)
+            # env.render()
+            # time.sleep(1)
 
     # transition_matrix = np.zeros((100,4,100))
     # for i in range(10):

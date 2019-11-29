@@ -2,12 +2,15 @@ import numpy as np
 import gym
 from tqdm import tqdm
 import math
+
 seed = 1
 np.random.seed(seed)
 
 P = None
 
-state_index_mapping = np.load('state_mapping_mc.npy',allow_pickle=True).item()
+state_index_mapping = np.load('state_mapping_mc.npy', allow_pickle=True).item()
+
+
 # print(type(state_index_mapping),state_index_mapping)
 # print(state_index_mapping)
 def transition_probabilities(i1, action, i2, num_x=20, num_v=20):
@@ -69,7 +72,7 @@ def backward_pass(n_states, n_actions, traj_length, terminal, rewards):
                     # print('c2',c2)
                     c3 = z_states[k]
                     # print('c3',c3)
-                    curr_sum += c1*c2*c3
+                    curr_sum += c1 * c2 * c3
                     # if(curr_sum<=0):
                     #     print("{0},{1},{2}".format(c1,c2,c3))
                 z_actions[i, j] = curr_sum
@@ -90,7 +93,7 @@ def local_action_probability_computation(z_states, z_actions):
 def forward_pass(policy, trajectories, traj_length):
     D_t = np.zeros((policy.shape[0], traj_length))
     for i in trajectories:
-        D_t[i[0][0], :] += 1/len(trajectories)
+        D_t[i[0][0], :] += 1 / len(trajectories)
     # D_t[:, :] = D_t[:, :] / len(trajectories)
 
     for s in range(policy.shape[0]):
@@ -127,40 +130,26 @@ def expert_feature_expectations(trajectories, features):
             exps += f / len(trajectories)
     return (exps)
 
-def fraction_of_differing_states(r1,r2,pr):
-    s1 = np.zeros((10,10))
-    s2 = np.zeros((10,10))
-    for i in range(100):
-        r = i//10
-        c = i%10
-        s1[r,c]=r1[i]
-        s2[r,c]=r2[i]
 
-    for i in range(100):
-        r = i // 10
-        c = i % 10
-        possible_states = np.where(pr[i,:,:]==1)[0]
-
-
-def irl(pr, features, trajectories, epochs, alpha, n_states, n_actions,true_rewards):
+def irl(pr, features, trajectories, epochs, alpha, n_states, n_actions, true_rewards):
     global P
     P = pr
     errors = []
     terminal = trajectories[0][-1][0]
-    true_rewards = true_rewards/np.linalg.norm(true_rewards)
+    true_rewards = true_rewards / np.linalg.norm(true_rewards)
     theta = np.random.uniform(size=(features.shape[1]))
     exps = expert_feature_expectations(trajectories, features)
     for i in tqdm(range(epochs)):
         rewards = np.dot(features, theta)
-        rewards = rewards/np.linalg.norm(rewards) if not np.all(rewards==0) else rewards
-        er = np.linalg.norm(rewards-true_rewards)
+        rewards = rewards / np.linalg.norm(rewards) if not np.all(rewards == 0) else rewards
+        er = np.linalg.norm(rewards - true_rewards)
         errors.append(er)
         # print("Error at epoch {0}: {1}".format(i,er))
-        D = expected_edge_frequency_calculation(trajectories, terminal, rewards,n_states,n_actions)
+        D = expected_edge_frequency_calculation(trajectories, terminal, rewards, n_states, n_actions)
         theta = update(theta, alpha, exps, features, D)
     # print(rewards)
-    rewards = np.dot(features, theta)/np.linalg.norm(rewards)
+    rewards = np.dot(features, theta) / np.linalg.norm(rewards)
 
-    np.save('rewardsgw', rewards)
-    np.save('errorsgw',errors)
+    np.save('Paper2/rewardsgw', rewards)
+    np.save('Paper2/errorsgw', errors)
     return (rewards)
