@@ -3,6 +3,8 @@ from scipy.stats import norm
 from scipy.optimize import linprog
 import lp_helper
 from math import exp,sqrt,pi
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 def calcPDF(a,m,s):
@@ -104,15 +106,31 @@ def valFuncGen(traj):
 
 
 def solve_lp(pred,other):
-	c=[0]*(numOfBasis*numOfBasis)
-	for i in range(numOfBasis*numOfBasis):
-		c[i] = -1*len(other)*pred[i]
-		for o in other:
-			c[i]=c[i]+o[i]
+	c=[0]*(numOfBasis*numOfBasis) + [-1]*(len(other))
+	A=[[0 for i in range(len(c))] for j in range(2*len(other))]
+	b=[0]*(2*len(other))
+	bound=[(-1,1) for i in range(numOfBasis*numOfBasis)]+[(None,None) for j in range(len(other))]
 
-	b=[(-1,1) for i in range(numOfBasis*numOfBasis)]
+	for i in range(len(other)):
+		A[2*i][numOfBasis*numOfBasis+i]=1
+		A[2*i+1][numOfBasis*numOfBasis+i]=1
+		for j in range(numOfBasis*numOfBasis):
+			# A[2*i][numOfBasis*numOfBasis+i]=1
+			# A[2*i+1][numOfBasis*numOfBasis+i]=1
 
-	res=linprog(c,bounds=b)
+			A[2*i][j]=-1*pred[j]+other[i][j]
+			A[2*i+1][j]=4*(-1*pred[j]+other[i][j])
+
+	res = linprog(c,A_ub=A,b_ub=b,bounds=bound)
+	# c=[0]*(numOfBasis*numOfBasis)
+	# for i in range(numOfBasis*numOfBasis):
+	# 	c[i] = -1*len(other)*pred[i]
+	# 	for o in other:
+	# 		c[i]=c[i]+o[i]
+
+	# b=[(-1,1) for i in range(numOfBasis*numOfBasis)]
+
+	# res=linprog(c,bounds=b)
 	#print(res['x'])
 	return res['x']
 
@@ -159,6 +177,13 @@ def showReward(R):
 			print("%.1f" % R[i][j],end=" ")
 		print()
 
+def comparePolicy(P,P1):
+	same=0
+	for i in range(N):
+		for j in range(N):
+			if P1[i][j] in P[i][j]:
+				same+=1
+	return same/(N*N)
 
 random.seed(0)
 N=50
@@ -170,20 +195,19 @@ x_basis_mean=[i/(numOfBasis-1) for i in range(numOfBasis-1)]+[1.0]
 y_basis_mean=[i/(numOfBasis-1) for i in range(numOfBasis-1)]+[1.0]
 # print(x_basis_mean,y_basis_mean)
 
-policy_predicted=lp_helper.getOptimalPolicy(N,None)
+policy_predicted, equiv_poliy=lp_helper.getOptimalPolicy(N,None)
 value_func_predicted=valFuncGen(getMonteCarloTrajectories(policy_predicted,30,1000))
 showPolicy(policy_predicted)
 #exit(0)
 
 random_policy=[[random.choice(["U","D","L","R"]) for i in range(N)] for j in range(N)]
 policy_set=[random_policy]
+print(comparePolicy(policy_predicted,random_policy))
 
-trajectory_set=[]#[getMonteCarloTrajectories(policy_set[-1],30,500)]
-#print(len(trajectory_set[-1][1500]))
-value_function_set=[]#[valFuncGen(trajectory_set[-1])]
-#print(value_function_set)
+trajectory_set=[]
+value_function_set=[]
 
-for T in range(10):
+for T in range(1):
 	print("Generating Trajectories")
 	trajectory_set.append(getMonteCarloTrajectories(policy_set[-1],30,1000))
 	print("Computing Value Functions")
@@ -192,13 +216,19 @@ for T in range(10):
 
 	print("Solving LP")
 	alphas=solve_lp(value_func_predicted,value_function_set)
+	#print(alphas)
 
 	R=makeNewReward(value_func_predicted,alphas)
 	showReward(R)
 
-	P=lp_helper.getOptimalPolicy(N,R)
+	P,e=lp_helper.getOptimalPolicy(N,R)
 	showPolicy(P)
+	print(comparePolicy(policy_predicted,P))
 	policy_set.append(P)
-
+	sns.heatmap(R, xticklabels=False, yticklabels=False)
+	plt.title("Continuous Gridworld Retrieved Reward")
+	plt.xlabel("States in x-dimension")
+	plt.ylabel("States in y-dimension")
+	plt.show()
 
 
