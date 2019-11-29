@@ -42,4 +42,4 @@ def main(grid_size, discount, n_trajectories, epochs, learning_rate):
     plt.show()
 
 if __name__ == '__main__':
-    main(10, 0.01, 100, 100, 0.01)
+    main(10, 0.01, 100, 1, 0.01)
