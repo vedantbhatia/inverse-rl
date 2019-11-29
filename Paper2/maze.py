@@ -7,10 +7,10 @@ import gym
 import matplotlib.pyplot as plt
 import gym_maze
 
-IRL_REWARDS = np.load('Paper2/rewardsgw.npy',allow_pickle=True)
+IRL_REWARDS = np.load('rewardsgw.npy',allow_pickle=True)
 IRL_REWARDS = IRL_REWARDS - np.max(IRL_REWARDS)
 
-def simulate(IRL=False):
+def simulate(ax,color,IRL=False):
 
     # Instantiating the learning related parameters
     rewards = []
@@ -108,7 +108,7 @@ def simulate(IRL=False):
         learning_rate = get_learning_rate(episode)
         rewards.append(total_reward)
     l = 'IRL Rewards' if IRL else 'True Rewards'
-    plt.plot(rewards,label=l)
+    ax.plot(rewards,color=color)
     # plt.show()
 
 
@@ -196,10 +196,30 @@ if __name__ == "__main__":
     if ENABLE_RECORDING:
         env.monitor.start(recording_folder, force=True)
 
-    simulate()
+    fig, ax1 = plt.subplots()
+
+    color = 'tab:red'
+    ax1.set_xlabel('Episodes')
+    ax1.set_ylabel('Episodic True Reward', color=color)
+
+    simulate(ax1,color)
     q_table = np.zeros(NUM_BUCKETS + (NUM_ACTIONS,), dtype=float)
 
-    simulate(True)
+    ax1.tick_params(axis='y', labelcolor=color)
+
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+    color = 'tab:blue'
+    ax2.set_ylabel('Episodic IRL Reward', color=color)  # we already handled the x-label with ax1
+    simulate(ax2,color,True)
+    # ax2.plot(t, data2, color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+
+    fig.tight_layout()
+
+
+    # plt.xlim([-5,5])
+    # plt.ylim([-5,5])
     plt.legend()
     plt.show()
 
